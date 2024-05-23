@@ -22,7 +22,7 @@ on: ubuntu-latest
       DEVICE_MAKEFILE:
         description: 'Name of device-specific makefile from tree (format: <PREFIX>_<DEVICE_NAME>)'
         required: true
-        default: camellia
+        default: pb_camellia
       BUILD_TARGET:
         type: choice
         description: Partition containing recovery ramdisk
@@ -31,7 +31,7 @@ on: ubuntu-latest
         - recovery
         - vendor_boot
         required: true
-        default: recovery
+        default: boot
 
 jobs:
   build:
