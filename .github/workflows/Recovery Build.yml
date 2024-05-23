@@ -118,7 +118,7 @@ jobs:
         cd workspace
         git config --global user.name "${GITHUB_ACTOR}"
         git config --global user.email "${GITHUB_ACTOR_ID}+${GITHUB_ACTOR}@users.noreply.github.com"
-        repo init --depth=1 -u https://github.com/minimal-manifest-twrp/platform_manifest_twrp_${{ steps.buildtree.outputs.value }}.git -b twrp-${{ inputs.MANIFEST_BRANCH }}
+        repo init --depth=1 -u https://github.com/PitchBlackRecoveryProject/manifest_pb -b android-${{ inputs.MANIFEST_BRANCH }}
           
     - name: Repo Sync
       run: |
@@ -171,7 +171,8 @@ jobs:
       if: ${{ steps.buildtree.outputs.value == 'aosp' }}
       run: |
         source build/envsetup.sh
-        lunch twrp_${{ inputs.DEVICE_NAME }}-eng
+        lunch pb_${{ inputs.DEVICE_NAME }}-eng
+        mka pbrp
       working-directory: workspace
       id: syncdevicedeps
       continue-on-error: true
@@ -236,7 +237,7 @@ jobs:
           export USE_RECOVERY_INSTALLER=true
           export RECOVERY_INSTALLER_PATH=bootable/recovery/installer
         fi
-        lunch twrp_${{ inputs.DEVICE_NAME }}-eng && make $(tr -d _ <<< ${{ inputs.BUILD_TARGET }})image -j$(nproc --all)
+        lunch pb_${{ inputs.DEVICE_NAME }}-eng && make $(tr -d _ <<< ${{ inputs.BUILD_TARGET }})image -j$(nproc --all)
       working-directory: workspace
 
     - name: Building recovery (Omni)
