@@ -1,6 +1,6 @@
 name: Recovery Build
 
-on: ubuntu-latest
+on: 
   workflow_dispatch:
     inputs:
       MANIFEST_BRANCH:
