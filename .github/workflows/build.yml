@@ -1,0 +1,78 @@
+name: Build and Release ShapeShiftOS
+
+on: [push]
+
+jobs:
+  build:
+    runs-on: ubuntu-22.04
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v2
+
+    - name: Cleanup
+      uses: rokibhasansagar/slimhub_actions@main
+
+    - name: Set Swap Space
+      uses: pierotofy/set-swap-space@master
+      with:
+        swap-size-gb: 24
+
+    - name: Prepare Environment
+      run: |
+        sudo apt update
+        sudo apt -y upgrade
+        sudo apt -y install gperf gcc-multilib gcc-10-multilib g++-multilib g++-10-multilib libc6-dev lib32ncurses5-dev x11proto-core-dev libx11-dev tree lib32z-dev libgl1-mesa-dev libxml2-utils xsltproc bc ccache lib32readline-dev lib32z1-dev liblz4-tool libncurses5-dev libsdl1.2-dev libwxgtk3.0-gtk3-dev libxml2 lzop pngcrush schedtool squashfs-tools imagemagick libbz2-dev lzma ncftp qemu-user-static libstdc++-10-dev libtinfo5
+        sudo add-apt-repository universe
+        sudo apt -y install libncurses5
+        
+    - name: Setup Java
+      uses: actions/setup-java@v4
+      with:
+        distribution: zulu
+        java-version: 8
+
+    - name: Install repo
+      run: |
+        mkdir ~/bin
+        curl https://storage.googleapis.com/git-repo-downloads/repo > ~/bin/repo
+        chmod a+x ~/bin/repo
+        sudo ln -sf ~/bin/repo /usr/bin/repo
+      
+    - name: Initialize repo
+      run: |
+        mkdir workspace
+        cd workspace
+        git config --global user.name "${GITHUB_ACTOR}"
+        git config --global user.email "${GITHUB_ACTOR_ID}+${GITHUB_ACTOR}@users.noreply.github.com"
+        repo init -u https://github.com/ShapeShiftOS/android_manifest.git -b android_13
+
+    - name: Repo Sync
+      run: |
+        repo sync -j$(nproc --all) --force-sync
+      working-directory: workspace
+
+    - name: Clone Device Tree
+      run: |
+        git clone https://github.com/dm700-devs/device_xiaomi_camellia -b thirteen ./device/xiaomi/camellia
+      working-directory: workspace
+
+    - name: Clone Vendor Tree
+      run: |
+        git clone https://github.com/dm700-devs/vendor_xiaomi_camellia -b thirteen ./vendor/xiaomi/camellia
+      working-directory: workspace
+
+    - name: Build ShapeShiftOS
+      run: |
+        source build/envsetup.sh
+        lunch ssos_camellia_userdebug
+        make bacon -j$(nproc --all) | tee log.txt
+      working-directory: workspace
+
+    - name: Upload to Release
+      uses: softprops/action-gh-release@4634c16e79c963813287e889244c50009e7f0981
+      with:
+        files: |
+          workspace/out/target/product/camellia/ShapeShiftOs*.zip
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }
